@@ -199,7 +199,7 @@ local Library = {
 
     --// Notifications \\--
     Notifications = {},
-    NotifySide = "Right",
+    NotifySide = "Middle",
     NotifyTweenInfo = TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
 
     --// Dialogues \\--
@@ -294,9 +294,9 @@ local Library = {
     --// Liquid Glass \\--
     GlassTransparency = 0.5,
     GlassBlurSize = 24,
-    GlassDimBrightness = -0.22,
-    GlassDimContrast = 0.1,
-    GlassDimSaturation = -0.18,
+    GlassDimBrightness = -0.18,
+    GlassDimContrast = 0.05,
+    GlassDimSaturation = 0,
     WorldBlur = nil,
     WorldDim = nil,
 
@@ -403,7 +403,7 @@ local Templates = {
         GlobalSearch = false,
 
         CornerRadius = 4,
-        NotifySide = "Right",
+        NotifySide = "Middle",
         ShowCustomCursor = true,
 
         Font = Enum.Font.Code,
@@ -1611,13 +1611,13 @@ local function AddGlassSheen(Parent: GuiObject)
     Gradient.Rotation = 112
     Gradient.Color = ColorSequence.new({
         ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
-        ColorSequenceKeypoint.new(0.4, Color3.fromRGB(200, 214, 255)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(36, 42, 70)),
+        ColorSequenceKeypoint.new(0.4, Color3.fromRGB(255, 255, 255)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 255, 255)),
     })
     Gradient.Transparency = NumberSequence.new({
-        NumberSequenceKeypoint.new(0, 0.7),
-        NumberSequenceKeypoint.new(0.42, 0.88),
-        NumberSequenceKeypoint.new(1, 0.97),
+        NumberSequenceKeypoint.new(0, 0.75),
+        NumberSequenceKeypoint.new(0.42, 0.9),
+        NumberSequenceKeypoint.new(1, 0.98),
     })
     Gradient.Parent = Sheen
 
@@ -1646,9 +1646,9 @@ function Library:SetWorldGlass(Enabled: boolean)
     if Library.WorldDim then
         Library.WorldDim.Enabled = true
         TweenService:Create(Library.WorldDim, Info, {
-            Brightness = Enabled and (Library.GlassDimBrightness or -0.22) or 0,
-            Contrast = Enabled and (Library.GlassDimContrast or 0.1) or 0,
-            Saturation = Enabled and (Library.GlassDimSaturation or -0.18) or 0,
+            Brightness = Enabled and (Library.GlassDimBrightness or -0.18) or 0,
+            Contrast = Enabled and (Library.GlassDimContrast or 0.05) or 0,
+            Saturation = Enabled and (Library.GlassDimSaturation or 0) or 0,
         }):Play()
 
         if not Enabled then
@@ -1924,9 +1924,9 @@ local NotificationArea
 local NotifyOrder = {}
 do
     NotificationArea = New("Frame", {
-        AnchorPoint = Vector2.new(1, 0),
+        AnchorPoint = Vector2.new(0.5, 0),
         BackgroundTransparency = 1,
-        Position = UDim2.new(1, -6, 0, 6),
+        Position = UDim2.new(0.5, 0, 0, 6),
         Size = UDim2.new(0, 300, 1, -6),
         ZIndex = 200,
         Parent = ScreenGui,
@@ -10286,8 +10286,8 @@ function Library:SetBackgroundImage(Image: string | number)
 end
 
 function Library:UpdateNotificationPositions(Snap: boolean?)
-    local IsLeft = Library.NotifySide:lower() == "left"
-    local XScale = IsLeft and 0 or 1
+    local Side = Library.NotifySide:lower()
+    local XScale = if Side == "left" then 0 elseif Side == "middle" or Side == "center" then 0.5 else 1
     local RunningY = 0
 
     for _, FakeBackground in NotifyOrder do
@@ -10312,8 +10312,14 @@ end
 function Library:SetNotifySide(Side: string)
     Library.NotifySide = Side
 
-    local IsLeft = Side:lower() == "left"
-    if IsLeft then
+    local Lower = Side:lower()
+    local IsLeft = Lower == "left"
+    local IsMiddle = Lower == "middle" or Lower == "center"
+
+    if IsMiddle then
+        NotificationArea.AnchorPoint = Vector2.new(0.5, 0)
+        NotificationArea.Position = UDim2.new(0.5, 0, 0, 6)
+    elseif IsLeft then
         NotificationArea.AnchorPoint = Vector2.new(0, 0)
         NotificationArea.Position = UDim2.fromOffset(6, 6)
     else
@@ -10323,7 +10329,7 @@ function Library:SetNotifySide(Side: string)
 
     for FakeBackground in Library.Notifications do
         if not (FakeBackground and FakeBackground.Parent) then continue end
-        FakeBackground.AnchorPoint = if IsLeft then Vector2.new(0, 0) else Vector2.new(1, 0)
+        FakeBackground.AnchorPoint = if IsMiddle then Vector2.new(0.5, 0) elseif IsLeft then Vector2.new(0, 0) else Vector2.new(1, 0)
     end
 
     if Library.UpdateNotificationPositions then
@@ -10374,8 +10380,12 @@ function Library:Notify(...)
         end)
     end
 
+    local NotifySideLower = Library.NotifySide:lower()
+    local IsNotifyMiddle = NotifySideLower == "middle" or NotifySideLower == "center"
+    local IsNotifyLeft = NotifySideLower == "left"
+
     local FakeBackground = New("Frame", {
-        AnchorPoint = Library.NotifySide:lower() == "left" and Vector2.new(0, 0) or Vector2.new(1, 0),
+        AnchorPoint = if IsNotifyMiddle then Vector2.new(0.5, 0) elseif IsNotifyLeft then Vector2.new(0, 0) else Vector2.new(1, 0),
         AutomaticSize = Enum.AutomaticSize.Y,
         BackgroundTransparency = 1,
         Size = UDim2.fromOffset(0, 0),
@@ -10386,7 +10396,7 @@ function Library:Notify(...)
     local Holder = New("Frame", {
         AutomaticSize = Enum.AutomaticSize.Y,
         BackgroundColor3 = "MainColor",
-        Position = Library.NotifySide:lower() == "left" and UDim2.new(-1, -8, 0, 0) or UDim2.new(1, 8, 0, 0),
+        Position = if IsNotifyMiddle then UDim2.new(0, 0, 0, -40) elseif IsNotifyLeft then UDim2.new(-1, -8, 0, 0) else UDim2.new(1, 8, 0, 0),
         Size = UDim2.new(1, 0, 0, 0),
         ZIndex = 5,
         Parent = FakeBackground,
@@ -10640,9 +10650,14 @@ function Library:Notify(...)
 
         Library:UpdateNotificationPositions()
 
+        local DismissSide = Library.NotifySide:lower()
+        local DismissPos = if DismissSide == "middle" or DismissSide == "center" then UDim2.new(0, 0, 0, -40)
+            elseif DismissSide == "left" then UDim2.new(-1, -8, 0, -2)
+            else UDim2.new(1, 8, 0, -2)
+
         TweenService
             :Create(Holder, Library.NotifyTweenInfo, {
-                Position = Library.NotifySide:lower() == "left" and UDim2.new(-1, -8, 0, -2) or UDim2.new(1, 8, 0, -2),
+                Position = DismissPos,
             })
             :Play()
 
