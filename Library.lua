@@ -1927,7 +1927,7 @@ do
         AnchorPoint = Vector2.new(0.5, 0),
         BackgroundTransparency = 1,
         Position = UDim2.new(0.5, 0, 0, 6),
-        Size = UDim2.new(0, 300, 1, -6),
+        Size = UDim2.new(1, -12, 1, -6),
         ZIndex = 200,
         Parent = ScreenGui,
     })
@@ -10319,12 +10319,15 @@ function Library:SetNotifySide(Side: string)
     if IsMiddle then
         NotificationArea.AnchorPoint = Vector2.new(0.5, 0)
         NotificationArea.Position = UDim2.new(0.5, 0, 0, 6)
+        NotificationArea.Size = UDim2.new(1, -12, 1, -6)
     elseif IsLeft then
         NotificationArea.AnchorPoint = Vector2.new(0, 0)
         NotificationArea.Position = UDim2.fromOffset(6, 6)
+        NotificationArea.Size = UDim2.new(0, 300, 1, -6)
     else
         NotificationArea.AnchorPoint = Vector2.new(1, 0)
         NotificationArea.Position = UDim2.new(1, -6, 0, 6)
+        NotificationArea.Size = UDim2.new(0, 300, 1, -6)
     end
 
     for FakeBackground in Library.Notifications do
@@ -10567,9 +10570,10 @@ function Library:Notify(...)
         local ExtraWidth = BigIconLabel and 32 or 0
         local IconWidth = IconLabel and 21 or 0
         local CloseWidth = Data.Closable and 20 or 0
+        local AreaWidth = NotificationArea.AbsoluteSize.X / Library.DPIScale
         local MaxTextWidth = math.max(
             40,
-            (NotificationArea.AbsoluteSize.X / Library.DPIScale) - 24 - ExtraWidth - CloseWidth
+            math.min(300, AreaWidth) - 24 - ExtraWidth - CloseWidth
         )
 
         if Title then
@@ -11161,30 +11165,36 @@ function Library:CreateWindow(WindowInfo)
             TextTransparency = 0,
             Parent = BottomBar,
         })
+        -- Keep footer text white so the rainbow gradient always shows through
+        pcall(function()
+            Library:RemoveFromRegistry(FooterLabel)
+        end)
 
         local FooterGradient = Instance.new("UIGradient")
-        FooterGradient.Color = ColorSequence.new({
-            ColorSequenceKeypoint.new(0.00, Color3.fromRGB(255, 90, 190)),
-            ColorSequenceKeypoint.new(0.16, Color3.fromRGB(125, 85, 255)),
-            ColorSequenceKeypoint.new(0.33, Color3.fromRGB(0, 210, 255)),
-            ColorSequenceKeypoint.new(0.50, Color3.fromRGB(80, 255, 190)),
-            ColorSequenceKeypoint.new(0.66, Color3.fromRGB(255, 220, 80)),
-            ColorSequenceKeypoint.new(0.83, Color3.fromRGB(255, 120, 70)),
-            ColorSequenceKeypoint.new(1.00, Color3.fromRGB(255, 90, 190)),
-        })
         FooterGradient.Rotation = 0
+        FooterGradient.Offset = Vector2.zero
         FooterGradient.Parent = FooterLabel
 
-        -- Slow smooth rainbow loop (no hitch / delay)
+        local function MakeRainbowSequence(Shift: number): ColorSequence
+            local Keys = table.create(7)
+            for i = 0, 6 do
+                local Hue = (i / 6 + Shift) % 1
+                Keys[i + 1] = ColorSequenceKeypoint.new(i / 6, Color3.fromHSV(Hue, 1, 1))
+            end
+            return ColorSequence.new(Keys)
+        end
+
+        FooterGradient.Color = MakeRainbowSequence(0)
+
+        -- Continuous rainbow loop forever (no hitch, no delay)
         Library:GiveSignal(RunService.RenderStepped:Connect(function()
             if Library.Unloaded or not FooterLabel or not FooterLabel.Parent then
                 return
             end
 
-            local Clock = os.clock()
-            local t = Clock * 0.12 -- slow continuous cycle
-            FooterGradient.Offset = Vector2.new(math.sin(t) * 0.9, 0)
-            FooterGradient.Rotation = math.sin(t * 0.65) * 10
+            local Shift = (os.clock() * 0.2) % 1
+            FooterGradient.Color = MakeRainbowSequence(Shift)
+            FooterLabel.TextColor3 = Color3.new(1, 1, 1)
         end))
 
         --// Resize Button \\--
