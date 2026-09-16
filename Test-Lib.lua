@@ -199,7 +199,7 @@ local Library = {
 
     --// Notifications \\--
     Notifications = {},
-    NotifySide = "Middle",
+    NotifySide = "Right",
     NotifyTweenInfo = TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
 
     --// Dialogues \\--
@@ -294,9 +294,9 @@ local Library = {
     --// Liquid Glass \\--
     GlassTransparency = 0.5,
     GlassBlurSize = 24,
-    GlassDimBrightness = -0.18,
-    GlassDimContrast = 0.05,
-    GlassDimSaturation = 0,
+    GlassDimBrightness = -0.22,
+    GlassDimContrast = 0.1,
+    GlassDimSaturation = -0.18,
     WorldBlur = nil,
     WorldDim = nil,
 
@@ -403,7 +403,7 @@ local Templates = {
         GlobalSearch = false,
 
         CornerRadius = 4,
-        NotifySide = "Middle",
+        NotifySide = "Right",
         ShowCustomCursor = true,
 
         Font = Enum.Font.Code,
@@ -447,9 +447,9 @@ local Templates = {
             Gap = 0,
             Padding = 0,
             CornerRadius = 0,
-            Indicator = true,
-            IndicatorWidth = 3,
-            IndicatorHeight = 22,
+            Indicator = false,
+            IndicatorWidth = 2,
+            IndicatorHeight = 20,
         },
     },
     Groupbox = {
@@ -1611,13 +1611,13 @@ local function AddGlassSheen(Parent: GuiObject)
     Gradient.Rotation = 112
     Gradient.Color = ColorSequence.new({
         ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
-        ColorSequenceKeypoint.new(0.4, Color3.fromRGB(255, 255, 255)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 255, 255)),
+        ColorSequenceKeypoint.new(0.4, Color3.fromRGB(200, 214, 255)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(36, 42, 70)),
     })
     Gradient.Transparency = NumberSequence.new({
-        NumberSequenceKeypoint.new(0, 0.75),
-        NumberSequenceKeypoint.new(0.42, 0.9),
-        NumberSequenceKeypoint.new(1, 0.98),
+        NumberSequenceKeypoint.new(0, 0.7),
+        NumberSequenceKeypoint.new(0.42, 0.88),
+        NumberSequenceKeypoint.new(1, 0.97),
     })
     Gradient.Parent = Sheen
 
@@ -1646,9 +1646,9 @@ function Library:SetWorldGlass(Enabled: boolean)
     if Library.WorldDim then
         Library.WorldDim.Enabled = true
         TweenService:Create(Library.WorldDim, Info, {
-            Brightness = Enabled and (Library.GlassDimBrightness or -0.18) or 0,
-            Contrast = Enabled and (Library.GlassDimContrast or 0.05) or 0,
-            Saturation = Enabled and (Library.GlassDimSaturation or 0) or 0,
+            Brightness = Enabled and (Library.GlassDimBrightness or -0.22) or 0,
+            Contrast = Enabled and (Library.GlassDimContrast or 0.1) or 0,
+            Saturation = Enabled and (Library.GlassDimSaturation or -0.18) or 0,
         }):Play()
 
         if not Enabled then
@@ -1924,10 +1924,10 @@ local NotificationArea
 local NotifyOrder = {}
 do
     NotificationArea = New("Frame", {
-        AnchorPoint = Vector2.new(0.5, 0),
+        AnchorPoint = Vector2.new(1, 0),
         BackgroundTransparency = 1,
-        Position = UDim2.new(0.5, 0, 0, 6),
-        Size = UDim2.new(1, -12, 1, -6),
+        Position = UDim2.new(1, -6, 0, 6),
+        Size = UDim2.new(0, 300, 1, -6),
         ZIndex = 200,
         Parent = ScreenGui,
     })
@@ -10286,8 +10286,8 @@ function Library:SetBackgroundImage(Image: string | number)
 end
 
 function Library:UpdateNotificationPositions(Snap: boolean?)
-    local Side = Library.NotifySide:lower()
-    local XScale = if Side == "left" then 0 elseif Side == "middle" or Side == "center" then 0.5 else 1
+    local IsLeft = Library.NotifySide:lower() == "left"
+    local XScale = IsLeft and 0 or 1
     local RunningY = 0
 
     for _, FakeBackground in NotifyOrder do
@@ -10312,27 +10312,18 @@ end
 function Library:SetNotifySide(Side: string)
     Library.NotifySide = Side
 
-    local Lower = Side:lower()
-    local IsLeft = Lower == "left"
-    local IsMiddle = Lower == "middle" or Lower == "center"
-
-    if IsMiddle then
-        NotificationArea.AnchorPoint = Vector2.new(0.5, 0)
-        NotificationArea.Position = UDim2.new(0.5, 0, 0, 6)
-        NotificationArea.Size = UDim2.new(1, -12, 1, -6)
-    elseif IsLeft then
+    local IsLeft = Side:lower() == "left"
+    if IsLeft then
         NotificationArea.AnchorPoint = Vector2.new(0, 0)
         NotificationArea.Position = UDim2.fromOffset(6, 6)
-        NotificationArea.Size = UDim2.new(0, 300, 1, -6)
     else
         NotificationArea.AnchorPoint = Vector2.new(1, 0)
         NotificationArea.Position = UDim2.new(1, -6, 0, 6)
-        NotificationArea.Size = UDim2.new(0, 300, 1, -6)
     end
 
     for FakeBackground in Library.Notifications do
         if not (FakeBackground and FakeBackground.Parent) then continue end
-        FakeBackground.AnchorPoint = if IsMiddle then Vector2.new(0.5, 0) elseif IsLeft then Vector2.new(0, 0) else Vector2.new(1, 0)
+        FakeBackground.AnchorPoint = if IsLeft then Vector2.new(0, 0) else Vector2.new(1, 0)
     end
 
     if Library.UpdateNotificationPositions then
@@ -10383,12 +10374,8 @@ function Library:Notify(...)
         end)
     end
 
-    local NotifySideLower = Library.NotifySide:lower()
-    local IsNotifyMiddle = NotifySideLower == "middle" or NotifySideLower == "center"
-    local IsNotifyLeft = NotifySideLower == "left"
-
     local FakeBackground = New("Frame", {
-        AnchorPoint = if IsNotifyMiddle then Vector2.new(0.5, 0) elseif IsNotifyLeft then Vector2.new(0, 0) else Vector2.new(1, 0),
+        AnchorPoint = Library.NotifySide:lower() == "left" and Vector2.new(0, 0) or Vector2.new(1, 0),
         AutomaticSize = Enum.AutomaticSize.Y,
         BackgroundTransparency = 1,
         Size = UDim2.fromOffset(0, 0),
@@ -10399,7 +10386,7 @@ function Library:Notify(...)
     local Holder = New("Frame", {
         AutomaticSize = Enum.AutomaticSize.Y,
         BackgroundColor3 = "MainColor",
-        Position = if IsNotifyMiddle then UDim2.new(0, 0, 0, -40) elseif IsNotifyLeft then UDim2.new(-1, -8, 0, 0) else UDim2.new(1, 8, 0, 0),
+        Position = Library.NotifySide:lower() == "left" and UDim2.new(-1, -8, 0, 0) or UDim2.new(1, 8, 0, 0),
         Size = UDim2.new(1, 0, 0, 0),
         ZIndex = 5,
         Parent = FakeBackground,
@@ -10570,10 +10557,9 @@ function Library:Notify(...)
         local ExtraWidth = BigIconLabel and 32 or 0
         local IconWidth = IconLabel and 21 or 0
         local CloseWidth = Data.Closable and 20 or 0
-        local AreaWidth = NotificationArea.AbsoluteSize.X / Library.DPIScale
         local MaxTextWidth = math.max(
             40,
-            math.min(300, AreaWidth) - 24 - ExtraWidth - CloseWidth
+            (NotificationArea.AbsoluteSize.X / Library.DPIScale) - 24 - ExtraWidth - CloseWidth
         )
 
         if Title then
@@ -10654,14 +10640,9 @@ function Library:Notify(...)
 
         Library:UpdateNotificationPositions()
 
-        local DismissSide = Library.NotifySide:lower()
-        local DismissPos = if DismissSide == "middle" or DismissSide == "center" then UDim2.new(0, 0, 0, -40)
-            elseif DismissSide == "left" then UDim2.new(-1, -8, 0, -2)
-            else UDim2.new(1, 8, 0, -2)
-
         TweenService
             :Create(Holder, Library.NotifyTweenInfo, {
-                Position = DismissPos,
+                Position = Library.NotifySide:lower() == "left" and UDim2.new(-1, -8, 0, -2) or UDim2.new(1, 8, 0, -2),
             })
             :Play()
 
@@ -10686,10 +10667,41 @@ function Library:Notify(...)
         Parent = TimerHolder,
     })
     TimerFill = New("Frame", {
-        BackgroundColor3 = "AccentColor",
+        BackgroundColor3 = Color3.new(1, 1, 1),
         Size = UDim2.fromScale(1, 1),
         Parent = TimerBar,
     })
+
+    -- Animated color on notification loading bar (violet <-> rainbow loop)
+    local TimerGradient = Instance.new("UIGradient")
+    TimerGradient.Rotation = 0
+    TimerGradient.Parent = TimerFill
+
+    local function MakeTimerSequence(Shift: number): ColorSequence
+        local Keys = table.create(7)
+        for i = 0, 6 do
+            local Hue = (i / 6 + Shift) % 1
+            Keys[i + 1] = ColorSequenceKeypoint.new(i / 6, Color3.fromHSV(Hue, 1, 1))
+        end
+        return ColorSequence.new(Keys)
+    end
+
+    TimerGradient.Color = MakeTimerSequence(0)
+
+    local TimerColorConnection
+    TimerColorConnection = RunService.RenderStepped:Connect(function()
+        if Library.Unloaded or Data.Destroyed or not TimerFill or not TimerFill.Parent then
+            if TimerColorConnection then
+                TimerColorConnection:Disconnect()
+                TimerColorConnection = nil
+            end
+            return
+        end
+
+        local Shift = (os.clock() * 0.35) % 1
+        TimerGradient.Color = MakeTimerSequence(Shift)
+    end)
+    Library:GiveSignal(TimerColorConnection)
 
     if typeof(Data.Time) == "Instance" then
         TimerFill.Size = UDim2.fromScale(0, 1)
@@ -10985,49 +10997,9 @@ function Library:CreateWindow(WindowInfo)
             BackgroundTransparency = 1,
             Size = UDim2.new(0, X, 1, 0),
             Text = WindowInfo.Title,
-            TextColor3 = Color3.new(1, 1, 1),
             TextSize = 20,
             Parent = TitleHolder,
         })
-        pcall(function()
-            Library:RemoveFromRegistry(WindowTitle)
-        end)
-
-        -- Violet <-> Black animated title gradient
-        local TitleGradient = Instance.new("UIGradient")
-        TitleGradient.Rotation = 0
-        TitleGradient.Offset = Vector2.zero
-        TitleGradient.Parent = WindowTitle
-
-        local Violet = Color3.fromRGB(148, 0, 211)
-        local SoftViolet = Color3.fromRGB(186, 85, 255)
-        local Black = Color3.fromRGB(0, 0, 0)
-
-        local function MakeVioletBlackSequence(Shift: number): ColorSequence
-            local t = Shift % 1
-            local c1 = Black:Lerp(Violet, (math.sin(t * math.pi * 2) + 1) * 0.5)
-            local c2 = SoftViolet:Lerp(Black, (math.sin(t * math.pi * 2 + 1.2) + 1) * 0.5)
-            local c3 = Violet:Lerp(Black, (math.sin(t * math.pi * 2 + 2.4) + 1) * 0.5)
-            local c4 = Black:Lerp(SoftViolet, (math.sin(t * math.pi * 2 + 3.6) + 1) * 0.5)
-            return ColorSequence.new({
-                ColorSequenceKeypoint.new(0, c1),
-                ColorSequenceKeypoint.new(0.33, c2),
-                ColorSequenceKeypoint.new(0.66, c3),
-                ColorSequenceKeypoint.new(1, c4),
-            })
-        end
-
-        TitleGradient.Color = MakeVioletBlackSequence(0)
-
-        Library:GiveSignal(RunService.RenderStepped:Connect(function()
-            if Library.Unloaded or not WindowTitle or not WindowTitle.Parent then
-                return
-            end
-
-            local Shift = (os.clock() * 0.25) % 1
-            TitleGradient.Color = MakeVioletBlackSequence(Shift)
-            WindowTitle.TextColor3 = Color3.new(1, 1, 1)
-        end))
 
         --// Top Right Bar \\--
         RightWrapper = New("Frame", {
@@ -11200,39 +11172,32 @@ function Library:CreateWindow(WindowInfo)
             BackgroundTransparency = 1,
             Size = UDim2.fromScale(1, 1),
             Text = WindowInfo.Footer,
-            TextColor3 = Color3.new(1, 1, 1),
             TextSize = 14,
             TextTransparency = 0,
             Parent = BottomBar,
         })
-        pcall(function()
-            Library:RemoveFromRegistry(FooterLabel)
-        end)
 
         local FooterGradient = Instance.new("UIGradient")
+        FooterGradient.Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0.00, Color3.fromRGB(255, 90, 190)),
+            ColorSequenceKeypoint.new(0.16, Color3.fromRGB(125, 85, 255)),
+            ColorSequenceKeypoint.new(0.33, Color3.fromRGB(0, 210, 255)),
+            ColorSequenceKeypoint.new(0.50, Color3.fromRGB(80, 255, 190)),
+            ColorSequenceKeypoint.new(0.66, Color3.fromRGB(255, 220, 80)),
+            ColorSequenceKeypoint.new(0.83, Color3.fromRGB(255, 120, 70)),
+            ColorSequenceKeypoint.new(1.00, Color3.fromRGB(255, 90, 190)),
+        })
         FooterGradient.Rotation = 0
-        FooterGradient.Offset = Vector2.zero
         FooterGradient.Parent = FooterLabel
-
-        local function MakeRainbowSequence(Shift: number): ColorSequence
-            local Keys = table.create(7)
-            for i = 0, 6 do
-                local Hue = (i / 6 + Shift) % 1
-                Keys[i + 1] = ColorSequenceKeypoint.new(i / 6, Color3.fromHSV(Hue, 1, 1))
-            end
-            return ColorSequence.new(Keys)
-        end
-
-        FooterGradient.Color = MakeRainbowSequence(0)
 
         Library:GiveSignal(RunService.RenderStepped:Connect(function()
             if Library.Unloaded or not FooterLabel or not FooterLabel.Parent then
                 return
             end
 
-            local Shift = (os.clock() * 0.2) % 1
-            FooterGradient.Color = MakeRainbowSequence(Shift)
-            FooterLabel.TextColor3 = Color3.new(1, 1, 1)
+            local Clock = os.clock()
+            FooterGradient.Offset = Vector2.new((Clock * 0.28) % 2 - 1, 0)
+            FooterGradient.Rotation = math.sin(Clock * 0.85) * 16
         end))
 
         --// Resize Button \\--
@@ -11655,7 +11620,7 @@ function Library:CreateWindow(WindowInfo)
             if TabButtonsStyle.Indicator then
                 TabIndicator = New("Frame", {
                     AnchorPoint = Vector2.new(1, 0.5),
-                    BackgroundColor3 = Color3.new(1, 1, 1),
+                    BackgroundColor3 = "AccentColor",
                     BackgroundTransparency = 1,
                     Position = UDim2.new(0, -2, 0.5, 0),
                     Size = UDim2.fromOffset(TabButtonsStyle.IndicatorWidth, TabButtonsStyle.IndicatorHeight),
@@ -11666,41 +11631,6 @@ function Library:CreateWindow(WindowInfo)
                     CornerRadius = UDim.new(1, 0),
                     Parent = TabIndicator,
                 })
-
-                -- Violet <-> Black animated indicator bar
-                local IndicatorGradient = Instance.new("UIGradient")
-                IndicatorGradient.Rotation = 90
-                IndicatorGradient.Parent = TabIndicator
-
-                local IndViolet = Color3.fromRGB(148, 0, 211)
-                local IndSoftViolet = Color3.fromRGB(186, 85, 255)
-                local IndBlack = Color3.fromRGB(0, 0, 0)
-
-                local function MakeIndicatorSequence(Shift: number): ColorSequence
-                    local t = Shift % 1
-                    local c1 = IndBlack:Lerp(IndViolet, (math.sin(t * math.pi * 2) + 1) * 0.5)
-                    local c2 = IndSoftViolet:Lerp(IndBlack, (math.sin(t * math.pi * 2 + 1.5) + 1) * 0.5)
-                    local c3 = IndViolet:Lerp(IndBlack, (math.sin(t * math.pi * 2 + 3.0) + 1) * 0.5)
-                    return ColorSequence.new({
-                        ColorSequenceKeypoint.new(0, c1),
-                        ColorSequenceKeypoint.new(0.5, c2),
-                        ColorSequenceKeypoint.new(1, c3),
-                    })
-                end
-
-                IndicatorGradient.Color = MakeIndicatorSequence(0)
-
-                Library:GiveSignal(RunService.RenderStepped:Connect(function()
-                    if Library.Unloaded or not TabIndicator or not TabIndicator.Parent then
-                        return
-                    end
-                    if TabIndicator.BackgroundTransparency >= 1 then
-                        return
-                    end
-
-                    local Shift = (os.clock() * 0.3) % 1
-                    IndicatorGradient.Color = MakeIndicatorSequence(Shift)
-                end))
             end
 
             local ButtonHolder = New("Frame", {
@@ -13046,7 +12976,7 @@ function Library:CreateWindow(WindowInfo)
             if TabButtonsStyle.Indicator then
                 TabIndicator = New("Frame", {
                     AnchorPoint = Vector2.new(1, 0.5),
-                    BackgroundColor3 = Color3.new(1, 1, 1),
+                    BackgroundColor3 = "AccentColor",
                     BackgroundTransparency = 1,
                     Position = UDim2.new(0, -2, 0.5, 0),
                     Size = UDim2.fromOffset(TabButtonsStyle.IndicatorWidth, TabButtonsStyle.IndicatorHeight),
@@ -13057,41 +12987,6 @@ function Library:CreateWindow(WindowInfo)
                     CornerRadius = UDim.new(1, 0),
                     Parent = TabIndicator,
                 })
-
-                -- Violet <-> Black animated indicator bar
-                local IndicatorGradient = Instance.new("UIGradient")
-                IndicatorGradient.Rotation = 90
-                IndicatorGradient.Parent = TabIndicator
-
-                local IndViolet = Color3.fromRGB(148, 0, 211)
-                local IndSoftViolet = Color3.fromRGB(186, 85, 255)
-                local IndBlack = Color3.fromRGB(0, 0, 0)
-
-                local function MakeIndicatorSequence(Shift: number): ColorSequence
-                    local t = Shift % 1
-                    local c1 = IndBlack:Lerp(IndViolet, (math.sin(t * math.pi * 2) + 1) * 0.5)
-                    local c2 = IndSoftViolet:Lerp(IndBlack, (math.sin(t * math.pi * 2 + 1.5) + 1) * 0.5)
-                    local c3 = IndViolet:Lerp(IndBlack, (math.sin(t * math.pi * 2 + 3.0) + 1) * 0.5)
-                    return ColorSequence.new({
-                        ColorSequenceKeypoint.new(0, c1),
-                        ColorSequenceKeypoint.new(0.5, c2),
-                        ColorSequenceKeypoint.new(1, c3),
-                    })
-                end
-
-                IndicatorGradient.Color = MakeIndicatorSequence(0)
-
-                Library:GiveSignal(RunService.RenderStepped:Connect(function()
-                    if Library.Unloaded or not TabIndicator or not TabIndicator.Parent then
-                        return
-                    end
-                    if TabIndicator.BackgroundTransparency >= 1 then
-                        return
-                    end
-
-                    local Shift = (os.clock() * 0.3) % 1
-                    IndicatorGradient.Color = MakeIndicatorSequence(Shift)
-                end))
             end
 
             local ButtonHolder = New("Frame", {
