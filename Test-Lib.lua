@@ -447,9 +447,9 @@ local Templates = {
             Gap = 0,
             Padding = 0,
             CornerRadius = 0,
-            Indicator = false,
-            IndicatorWidth = 2,
-            IndicatorHeight = 20,
+            Indicator = true,
+            IndicatorWidth = 3,
+            IndicatorHeight = 22,
         },
     },
     Groupbox = {
@@ -10999,12 +10999,11 @@ function Library:CreateWindow(WindowInfo)
         TitleGradient.Offset = Vector2.zero
         TitleGradient.Parent = WindowTitle
 
-        local Violet = Color3.fromRGB(148, 0, 211) -- deep violet
-        local SoftViolet = Color3.fromRGB(186, 85, 255) -- lighter violet
+        local Violet = Color3.fromRGB(148, 0, 211)
+        local SoftViolet = Color3.fromRGB(186, 85, 255)
         local Black = Color3.fromRGB(0, 0, 0)
 
         local function MakeVioletBlackSequence(Shift: number): ColorSequence
-            -- Shift moves the violet/black bands smoothly along the title
             local t = Shift % 1
             local c1 = Black:Lerp(Violet, (math.sin(t * math.pi * 2) + 1) * 0.5)
             local c2 = SoftViolet:Lerp(Black, (math.sin(t * math.pi * 2 + 1.2) + 1) * 0.5)
@@ -11656,7 +11655,7 @@ function Library:CreateWindow(WindowInfo)
             if TabButtonsStyle.Indicator then
                 TabIndicator = New("Frame", {
                     AnchorPoint = Vector2.new(1, 0.5),
-                    BackgroundColor3 = "AccentColor",
+                    BackgroundColor3 = Color3.new(1, 1, 1),
                     BackgroundTransparency = 1,
                     Position = UDim2.new(0, -2, 0.5, 0),
                     Size = UDim2.fromOffset(TabButtonsStyle.IndicatorWidth, TabButtonsStyle.IndicatorHeight),
@@ -11667,6 +11666,41 @@ function Library:CreateWindow(WindowInfo)
                     CornerRadius = UDim.new(1, 0),
                     Parent = TabIndicator,
                 })
+
+                -- Violet <-> Black animated indicator bar
+                local IndicatorGradient = Instance.new("UIGradient")
+                IndicatorGradient.Rotation = 90
+                IndicatorGradient.Parent = TabIndicator
+
+                local IndViolet = Color3.fromRGB(148, 0, 211)
+                local IndSoftViolet = Color3.fromRGB(186, 85, 255)
+                local IndBlack = Color3.fromRGB(0, 0, 0)
+
+                local function MakeIndicatorSequence(Shift: number): ColorSequence
+                    local t = Shift % 1
+                    local c1 = IndBlack:Lerp(IndViolet, (math.sin(t * math.pi * 2) + 1) * 0.5)
+                    local c2 = IndSoftViolet:Lerp(IndBlack, (math.sin(t * math.pi * 2 + 1.5) + 1) * 0.5)
+                    local c3 = IndViolet:Lerp(IndBlack, (math.sin(t * math.pi * 2 + 3.0) + 1) * 0.5)
+                    return ColorSequence.new({
+                        ColorSequenceKeypoint.new(0, c1),
+                        ColorSequenceKeypoint.new(0.5, c2),
+                        ColorSequenceKeypoint.new(1, c3),
+                    })
+                end
+
+                IndicatorGradient.Color = MakeIndicatorSequence(0)
+
+                Library:GiveSignal(RunService.RenderStepped:Connect(function()
+                    if Library.Unloaded or not TabIndicator or not TabIndicator.Parent then
+                        return
+                    end
+                    if TabIndicator.BackgroundTransparency >= 1 then
+                        return
+                    end
+
+                    local Shift = (os.clock() * 0.3) % 1
+                    IndicatorGradient.Color = MakeIndicatorSequence(Shift)
+                end))
             end
 
             local ButtonHolder = New("Frame", {
@@ -13012,7 +13046,7 @@ function Library:CreateWindow(WindowInfo)
             if TabButtonsStyle.Indicator then
                 TabIndicator = New("Frame", {
                     AnchorPoint = Vector2.new(1, 0.5),
-                    BackgroundColor3 = "AccentColor",
+                    BackgroundColor3 = Color3.new(1, 1, 1),
                     BackgroundTransparency = 1,
                     Position = UDim2.new(0, -2, 0.5, 0),
                     Size = UDim2.fromOffset(TabButtonsStyle.IndicatorWidth, TabButtonsStyle.IndicatorHeight),
@@ -13023,6 +13057,41 @@ function Library:CreateWindow(WindowInfo)
                     CornerRadius = UDim.new(1, 0),
                     Parent = TabIndicator,
                 })
+
+                -- Violet <-> Black animated indicator bar
+                local IndicatorGradient = Instance.new("UIGradient")
+                IndicatorGradient.Rotation = 90
+                IndicatorGradient.Parent = TabIndicator
+
+                local IndViolet = Color3.fromRGB(148, 0, 211)
+                local IndSoftViolet = Color3.fromRGB(186, 85, 255)
+                local IndBlack = Color3.fromRGB(0, 0, 0)
+
+                local function MakeIndicatorSequence(Shift: number): ColorSequence
+                    local t = Shift % 1
+                    local c1 = IndBlack:Lerp(IndViolet, (math.sin(t * math.pi * 2) + 1) * 0.5)
+                    local c2 = IndSoftViolet:Lerp(IndBlack, (math.sin(t * math.pi * 2 + 1.5) + 1) * 0.5)
+                    local c3 = IndViolet:Lerp(IndBlack, (math.sin(t * math.pi * 2 + 3.0) + 1) * 0.5)
+                    return ColorSequence.new({
+                        ColorSequenceKeypoint.new(0, c1),
+                        ColorSequenceKeypoint.new(0.5, c2),
+                        ColorSequenceKeypoint.new(1, c3),
+                    })
+                end
+
+                IndicatorGradient.Color = MakeIndicatorSequence(0)
+
+                Library:GiveSignal(RunService.RenderStepped:Connect(function()
+                    if Library.Unloaded or not TabIndicator or not TabIndicator.Parent then
+                        return
+                    end
+                    if TabIndicator.BackgroundTransparency >= 1 then
+                        return
+                    end
+
+                    local Shift = (os.clock() * 0.3) % 1
+                    IndicatorGradient.Color = MakeIndicatorSequence(Shift)
+                end))
             end
 
             local ButtonHolder = New("Frame", {
