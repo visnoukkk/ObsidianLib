@@ -1,16 +1,16 @@
-local cloneref = (cloneref or clonereference or function(instance: any)
+local cloneref = (cloneref or clonereference or function(instance)
     return instance
 end)
-local CoreGui: CoreGui = cloneref(game:GetService("CoreGui"))
-local GuiService: GuiService = cloneref(game:GetService("GuiService"))
-local Players: Players = cloneref(game:GetService("Players"))
-local RunService: RunService = cloneref(game:GetService("RunService"))
-local SoundService: SoundService = cloneref(game:GetService("SoundService"))
-local UserInputService: UserInputService = cloneref(game:GetService("UserInputService"))
-local TextService: TextService = cloneref(game:GetService("TextService"))
-local Teams: Teams = cloneref(game:GetService("Teams"))
-local Lighting: Lighting = cloneref(game:GetService("Lighting"))
-local TweenService: TweenService = cloneref(game:GetService("TweenService"))
+local CoreGui = cloneref(game:GetService("CoreGui"))
+local GuiService = cloneref(game:GetService("GuiService"))
+local Players = cloneref(game:GetService("Players"))
+local RunService = cloneref(game:GetService("RunService"))
+local SoundService = cloneref(game:GetService("SoundService"))
+local UserInputService = cloneref(game:GetService("UserInputService"))
+local TextService = cloneref(game:GetService("TextService"))
+local Teams = cloneref(game:GetService("Teams"))
+local Lighting = cloneref(game:GetService("Lighting"))
+local TweenService = cloneref(game:GetService("TweenService"))
 
 local getgenv = getgenv or function()
     return shared
@@ -1865,7 +1865,7 @@ do
     Cursor.Name = "ObsidianCursor"
     Cursor.BackgroundTransparency = 1
     Cursor.Image = CURSOR_IMAGE
-    Cursor.ImageColor3 = Library.Scheme.AccentColor
+    Cursor.ImageColor3 = (Library.Scheme and Library.Scheme.AccentColor) or Color3.fromRGB(125, 85, 255)
     Cursor.Size = UDim2.fromOffset(17, 17)
     Cursor.Rotation = -45
     Cursor.Visible = false
@@ -1952,16 +1952,35 @@ Library.Cursor = {}
 
 function Library.Cursor:ResetCross()
     for _, Inner in InnerCross do
-        Library.Registry[Inner].BackgroundColor3 = "WhiteColor"
-        Inner.BackgroundColor3 = Library.Scheme.WhiteColor
+        if Inner and Library.Registry[Inner] then
+            Library.Registry[Inner].BackgroundColor3 = "WhiteColor"
+        end
+        if Inner then
+            Inner.BackgroundColor3 = Library.Scheme.WhiteColor
+        end
     end
 end
 
 function Library.Cursor:ResetIcon()
-    CursorCross.Visible = true
-    CursorCustomImage.Visible = false
-    CursorCustomImage.ImageColor3 = Color3.new(1, 1, 1)
-    CursorCustomImage.Size = UDim2.fromOffset(20, 20)
+    if CursorCross then
+        CursorCross.Visible = false
+    end
+    if CursorCustomImage then
+        CursorCustomImage.Visible = false
+        CursorCustomImage.ImageColor3 = Color3.new(1, 1, 1)
+        CursorCustomImage.Size = UDim2.fromOffset(20, 20)
+    end
+    if Cursor and Cursor:IsA("ImageLabel") then
+        Cursor.Image = "rbxassetid://4292970642"
+        Cursor.ImageColor3 = (Library.Scheme and Library.Scheme.AccentColor) or Color3.fromRGB(125, 85, 255)
+        Cursor.Size = UDim2.fromOffset(17, 17)
+        Cursor.Rotation = -45
+    end
+    if CursorOutline then
+        CursorOutline.Image = "rbxassetid://4292970642"
+        CursorOutline.Size = UDim2.fromOffset(19, 19)
+        CursorOutline.Rotation = -45
+    end
 end
 
 function Library.Cursor:ResetCursor()
@@ -1969,15 +1988,22 @@ function Library.Cursor:ResetCursor()
     Library.Cursor:ResetIcon()
 end
 
-function Library.Cursor:ChangeCrossColor(Color: Color3)
+function Library.Cursor:ChangeCrossColor(Color)
     assert(typeof(Color) == "Color3", "Color3 expected.")
     for _, Inner in InnerCross do
-        Inner.BackgroundColor3 = Color
-        Library.Registry[Inner].BackgroundColor3 = nil
+        if Inner then
+            Inner.BackgroundColor3 = Color
+            if Library.Registry[Inner] then
+                Library.Registry[Inner].BackgroundColor3 = nil
+            end
+        end
+    end
+    if Cursor and Cursor:IsA("ImageLabel") then
+        Cursor.ImageColor3 = Color
     end
 end
 
-function Library.Cursor:ChangeIcon(ImageId: string)
+function Library.Cursor:ChangeIcon(ImageId)
     if not ImageId or ImageId == "" then
         Library.Cursor:ResetIcon()
         return
@@ -1986,19 +2012,41 @@ function Library.Cursor:ChangeIcon(ImageId: string)
     local Icon = Library:GetCustomIcon(ImageId)
     assert(Icon, "Image must be a valid Roblox asset or a valid URL or a valid lucide icon.")
 
-    CursorCross.Visible = false
-    CursorCustomImage.Visible = true
-    Library:ApplyLucideIcon(CursorCustomImage, Icon)
+    if Cursor and Cursor:IsA("ImageLabel") then
+        Cursor.Image = Icon.Url or Cursor.Image
+        Cursor.ImageRectOffset = Icon.ImageRectOffset or Vector2.zero
+        Cursor.ImageRectSize = Icon.ImageRectSize or Vector2.zero
+        Cursor.Rotation = 0
+    end
+    if CursorOutline then
+        CursorOutline.Visible = false
+    end
+    if CursorCross then
+        CursorCross.Visible = false
+    end
+    if CursorCustomImage then
+        CursorCustomImage.Visible = false
+    end
 end
 
-function Library.Cursor:ChangeIconColor(Color: Color3)
+function Library.Cursor:ChangeIconColor(Color)
     assert(typeof(Color) == "Color3", "Color3 expected.")
-    CursorCustomImage.ImageColor3 = Color
+    if Cursor and Cursor:IsA("ImageLabel") then
+        Cursor.ImageColor3 = Color
+    end
+    if CursorCustomImage then
+        CursorCustomImage.ImageColor3 = Color
+    end
 end
 
-function Library.Cursor:ChangeIconSize(Size: UDim2)
+function Library.Cursor:ChangeIconSize(Size)
     assert(typeof(Size) == "UDim2", "UDim2 expected.")
-    CursorCustomImage.Size = Size
+    if Cursor and Cursor:IsA("ImageLabel") then
+        Cursor.Size = Size
+    end
+    if CursorCustomImage then
+        CursorCustomImage.Size = Size
+    end
 end
 
 --// DEPRECATED
@@ -13869,7 +13917,7 @@ function Library:CreateWindow(WindowInfo)
                     local PosX = MousePos.X
                     local PosY = MousePos.Y - InsetY - 1
 
-                    Cursor.ImageColor3 = Library.Scheme.AccentColor
+                    Cursor.ImageColor3 = (Library.Scheme and Library.Scheme.AccentColor) or Color3.fromRGB(125, 85, 255)
                     Cursor.Position = UDim2.fromOffset(PosX, PosY)
                     Cursor.Visible = true
 
