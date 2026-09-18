@@ -2285,8 +2285,6 @@ function Library:MakeDraggable(
     local InputChanged
 
     local SnapGuideX, SnapGuideY
-    local DragOutline
-    local DragOutlineStroke
 
     local function GetSnapGuides()
         if not SnapGuideX then
@@ -2318,57 +2316,12 @@ function Library:MakeDraggable(
         return SnapGuideX, SnapGuideY
     end
 
-    local function GetDragOutline()
-        if not DragOutline then
-            DragOutline = New("Frame", {
-                BackgroundColor3 = "AccentColor",
-                BackgroundTransparency = 0.72,
-                BorderSizePixel = 0,
-                Visible = false,
-                ZIndex = 9999,
-                Parent = ScreenGui,
-            })
-            table.insert(
-                Library.Corners,
-                New("UICorner", {
-                    CornerRadius = UDim.new(0, Library.CornerRadius or 4),
-                    Parent = DragOutline,
-                })
-            )
-            DragOutlineStroke = New("UIStroke", {
-                Color = "AccentColor",
-                Thickness = 2,
-                Transparency = 0.15,
-                Parent = DragOutline,
-            })
-        end
-
-        return DragOutline
-    end
-
-    local function UpdateDragOutline()
-        local Outline = GetDragOutline()
-        local AbsPos = UI.AbsolutePosition
-        local AbsSize = UI.AbsoluteSize
-
-        Outline.Position = UDim2.fromOffset(AbsPos.X, AbsPos.Y)
-        Outline.Size = UDim2.fromOffset(AbsSize.X, AbsSize.Y)
-        Outline.BackgroundColor3 = Library.Scheme.AccentColor
-        if DragOutlineStroke then
-            DragOutlineStroke.Color = Library.Scheme.AccentColor
-        end
-        Outline.Visible = true
-    end
-
     local function HideSnapGuides()
         if SnapGuideX then
             SnapGuideX.Visible = false
         end
         if SnapGuideY then
             SnapGuideY.Visible = false
-        end
-        if DragOutline then
-            DragOutline.Visible = false
         end
     end
 
@@ -2380,7 +2333,6 @@ function Library:MakeDraggable(
         StartPos = Input.Position
         FramePos = UI.Position
         Dragging = true
-        UpdateDragOutline()
 
         Changed = Input.Changed:Connect(function()
             if Input.UserInputState ~= Enum.UserInputState.End then
@@ -2452,7 +2404,6 @@ function Library:MakeDraggable(
             end
 
             UI.Position = UDim2.new(FramePos.X.Scale, NewX, FramePos.Y.Scale, NewY)
-            UpdateDragOutline()
         end
     end)
 
@@ -2477,11 +2428,6 @@ function Library:MakeDraggable(
         end
         if SnapGuideY then
             SnapGuideY:Destroy()
-        end
-        if DragOutline then
-            DragOutline:Destroy()
-            DragOutline = nil
-            DragOutlineStroke = nil
         end
 
         local IdxChanged = table.find(Library.Signals, InputChanged)
