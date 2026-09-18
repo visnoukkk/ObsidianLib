@@ -1841,86 +1841,66 @@ local Overlay = New("Frame", {
 Library.Floats = Floats
 Library.Overlay = Overlay
 
---// Cursor (image style matching classic UI libraries)
+--// Cursor (image style from classic UI libraries)
 local Cursor
 local CursorOutline
-local CursorCross -- kept for API compatibility (hidden by default)
+local CursorCross
 local InnerCross = {}
 local CursorCustomImage
 do
     local CURSOR_IMAGE = "rbxassetid://4292970642"
 
-    Cursor = New("ImageLabel", {
-        BackgroundTransparency = 1,
-        Image = CURSOR_IMAGE,
-        ImageColor3 = "AccentColor",
-        Size = UDim2.fromOffset(17, 17),
-        Rotation = -45,
-        Visible = false,
-        ZIndex = 11001,
-        Parent = ScreenGui,
-    })
+    CursorOutline = Instance.new("ImageLabel")
+    CursorOutline.Name = "ObsidianCursorOutline"
+    CursorOutline.BackgroundTransparency = 1
+    CursorOutline.Image = CURSOR_IMAGE
+    CursorOutline.ImageColor3 = Color3.new(0, 0, 0)
+    CursorOutline.Size = UDim2.fromOffset(19, 19)
+    CursorOutline.Rotation = -45
+    CursorOutline.Visible = false
+    CursorOutline.ZIndex = 11000
+    CursorOutline.Parent = ScreenGui
 
-    CursorOutline = New("ImageLabel", {
-        BackgroundTransparency = 1,
-        Image = CURSOR_IMAGE,
-        ImageColor3 = Color3.new(0, 0, 0),
-        Size = UDim2.fromOffset(19, 19),
-        Rotation = -45,
-        Visible = false,
-        ZIndex = 11000,
-        Parent = ScreenGui,
-    })
+    Cursor = Instance.new("ImageLabel")
+    Cursor.Name = "ObsidianCursor"
+    Cursor.BackgroundTransparency = 1
+    Cursor.Image = CURSOR_IMAGE
+    Cursor.ImageColor3 = Library.Scheme.AccentColor
+    Cursor.Size = UDim2.fromOffset(17, 17)
+    Cursor.Rotation = -45
+    Cursor.Visible = false
+    Cursor.ZIndex = 11001
+    Cursor.Parent = ScreenGui
 
-    -- Compatibility stubs (old crosshair API still works if someone switches mode)
-    CursorCross = New("Frame", {
-        AnchorPoint = Vector2.new(0.5, 0.5),
-        BackgroundTransparency = 1,
-        Position = UDim2.fromScale(0.5, 0.5),
-        Size = UDim2.fromOffset(11, 11),
-        Visible = false,
-        Parent = Cursor,
-    })
+    -- Compatibility stubs for old Cursor API
+    CursorCross = Instance.new("Frame")
+    CursorCross.AnchorPoint = Vector2.new(0.5, 0.5)
+    CursorCross.BackgroundTransparency = 1
+    CursorCross.Size = UDim2.fromOffset(11, 11)
+    CursorCross.Visible = false
+    CursorCross.Parent = Cursor
 
-    table.insert(InnerCross, New("Frame", {
-        AnchorPoint = Vector2.new(0.5, 0.5),
-        BackgroundColor3 = "WhiteColor",
-        Position = UDim2.fromScale(0.5, 0.5),
-        Size = UDim2.new(1, -2, 0, 1),
-        ZIndex = 2,
-        Visible = false,
-        Parent = CursorCross,
-    }))
-    table.insert(InnerCross, New("Frame", {
-        AnchorPoint = Vector2.new(0.5, 0.5),
-        BackgroundColor3 = "WhiteColor",
-        Position = UDim2.fromScale(0.5, 0.5),
-        Size = UDim2.new(0, 1, 1, -2),
-        ZIndex = 2,
-        Visible = false,
-        Parent = CursorCross,
-    }))
-
-    CursorCustomImage = New("ImageLabel", {
-        AnchorPoint = Vector2.new(0.5, 0.5),
-        BackgroundTransparency = 1,
-        Position = UDim2.fromScale(0.5, 0.5),
-        Size = UDim2.fromOffset(20, 20),
-        ZIndex = 3,
-        Visible = false,
-        Parent = Cursor,
-    })
+    CursorCustomImage = Instance.new("ImageLabel")
+    CursorCustomImage.AnchorPoint = Vector2.new(0.5, 0.5)
+    CursorCustomImage.BackgroundTransparency = 1
+    CursorCustomImage.Size = UDim2.fromOffset(20, 20)
+    CursorCustomImage.Visible = false
+    CursorCustomImage.Parent = Cursor
 end
 
 local function RestoreMouseIcon()
-    pcall(function() 
+    pcall(function()
         RunService:UnbindFromRenderStep(Library.ShowCursorBinding)
         RunService.RenderStepped:Wait()
     end)
 
     UserInputService.MouseIconEnabled = Library.OriginalMouseIconEnabled
-    if Cursor then Cursor.Visible = false end
-    if CursorOutline then CursorOutline.Visible = false end
+    if Cursor then
+        Cursor.Visible = false
+    end
+    if CursorOutline then
+        CursorOutline.Visible = false
+    end
 end
 
 --// Notification \\--
@@ -13879,24 +13859,28 @@ function Library:CreateWindow(WindowInfo)
             RunService:BindToRenderStep(ShowCursorBinding, Enum.RenderPriority.Last.Value, function()
                 UserInputService.MouseIconEnabled = not Library.ShowCustomCursor
 
-                if Library.ShowCustomCursor then
+                if Library.ShowCustomCursor and Cursor then
                     local MousePos = UserInputService:GetMouseLocation()
                     local InsetY = 0
                     pcall(function()
                         InsetY = GuiService:GetGuiInset().Y
                     end)
-                    local Pos = UDim2.fromOffset(MousePos.X, MousePos.Y - InsetY - 1)
+
+                    local PosX = MousePos.X
+                    local PosY = MousePos.Y - InsetY - 1
 
                     Cursor.ImageColor3 = Library.Scheme.AccentColor
-                    Cursor.Position = Pos
+                    Cursor.Position = UDim2.fromOffset(PosX, PosY)
                     Cursor.Visible = true
 
                     if CursorOutline then
-                        CursorOutline.Position = Pos - UDim2.fromOffset(1, 1)
+                        CursorOutline.Position = UDim2.fromOffset(PosX - 1, PosY - 1)
                         CursorOutline.Visible = true
                     end
                 else
-                    Cursor.Visible = false
+                    if Cursor then
+                        Cursor.Visible = false
+                    end
                     if CursorOutline then
                         CursorOutline.Visible = false
                     end
