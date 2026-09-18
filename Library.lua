@@ -1841,60 +1841,63 @@ local Overlay = New("Frame", {
 Library.Floats = Floats
 Library.Overlay = Overlay
 
---// Cursor
+--// Cursor (image style matching classic UI libraries)
 local Cursor
-local CursorCross
+local CursorOutline
+local CursorCross -- kept for API compatibility (hidden by default)
 local InnerCross = {}
 local CursorCustomImage
 do
-    Cursor = New("Frame", {
-        AnchorPoint = Vector2.new(0.5, 0.5),
+    local CURSOR_IMAGE = "rbxassetid://4292970642"
+
+    Cursor = New("ImageLabel", {
         BackgroundTransparency = 1,
-        Size = UDim2.fromOffset(1, 1),
+        Image = CURSOR_IMAGE,
+        ImageColor3 = "AccentColor",
+        Size = UDim2.fromOffset(17, 17),
+        Rotation = -45,
+        Visible = false,
+        ZIndex = 11001,
+        Parent = ScreenGui,
+    })
+
+    CursorOutline = New("ImageLabel", {
+        BackgroundTransparency = 1,
+        Image = CURSOR_IMAGE,
+        ImageColor3 = Color3.new(0, 0, 0),
+        Size = UDim2.fromOffset(19, 19),
+        Rotation = -45,
         Visible = false,
         ZIndex = 11000,
         Parent = ScreenGui,
     })
 
+    -- Compatibility stubs (old crosshair API still works if someone switches mode)
     CursorCross = New("Frame", {
         AnchorPoint = Vector2.new(0.5, 0.5),
         BackgroundTransparency = 1,
         Position = UDim2.fromScale(0.5, 0.5),
         Size = UDim2.fromOffset(11, 11),
+        Visible = false,
         Parent = Cursor,
     })
 
-    New("Frame", {
-        AnchorPoint = Vector2.new(0.5, 0.5),
-        BackgroundColor3 = "DarkColor",
-        Position = UDim2.fromScale(0.5, 0.5),
-        Size = UDim2.new(1, 0, 0, 3),
-        ZIndex = 1,
-        Parent = CursorCross,
-    })
     table.insert(InnerCross, New("Frame", {
         AnchorPoint = Vector2.new(0.5, 0.5),
         BackgroundColor3 = "WhiteColor",
         Position = UDim2.fromScale(0.5, 0.5),
         Size = UDim2.new(1, -2, 0, 1),
         ZIndex = 2,
+        Visible = false,
         Parent = CursorCross,
     }))
-
-    New("Frame", {
-        AnchorPoint = Vector2.new(0.5, 0.5),
-        BackgroundColor3 = "DarkColor",
-        Position = UDim2.fromScale(0.5, 0.5),
-        Size = UDim2.new(0, 3, 1, 0),
-        ZIndex = 1,
-        Parent = CursorCross,
-    })
     table.insert(InnerCross, New("Frame", {
         AnchorPoint = Vector2.new(0.5, 0.5),
         BackgroundColor3 = "WhiteColor",
         Position = UDim2.fromScale(0.5, 0.5),
         Size = UDim2.new(0, 1, 1, -2),
         ZIndex = 2,
+        Visible = false,
         Parent = CursorCross,
     }))
 
@@ -1917,6 +1920,7 @@ local function RestoreMouseIcon()
 
     UserInputService.MouseIconEnabled = Library.OriginalMouseIconEnabled
     if Cursor then Cursor.Visible = false end
+    if CursorOutline then CursorOutline.Visible = false end
 end
 
 --// Notification \\--
@@ -10667,41 +10671,10 @@ function Library:Notify(...)
         Parent = TimerHolder,
     })
     TimerFill = New("Frame", {
-        BackgroundColor3 = Color3.new(1, 1, 1),
+        BackgroundColor3 = "AccentColor",
         Size = UDim2.fromScale(1, 1),
         Parent = TimerBar,
     })
-
-    -- Animated color on notification loading bar
-    local TimerGradient = Instance.new("UIGradient")
-    TimerGradient.Rotation = 0
-    TimerGradient.Parent = TimerFill
-
-    local function MakeTimerSequence(Shift: number): ColorSequence
-        local Keys = table.create(7)
-        for i = 0, 6 do
-            local Hue = (i / 6 + Shift) % 1
-            Keys[i + 1] = ColorSequenceKeypoint.new(i / 6, Color3.fromHSV(Hue, 1, 1))
-        end
-        return ColorSequence.new(Keys)
-    end
-
-    TimerGradient.Color = MakeTimerSequence(0)
-
-    local TimerColorConnection
-    TimerColorConnection = RunService.RenderStepped:Connect(function()
-        if Library.Unloaded or Data.Destroyed or not TimerFill or not TimerFill.Parent then
-            if TimerColorConnection then
-                TimerColorConnection:Disconnect()
-                TimerColorConnection = nil
-            end
-            return
-        end
-
-        local Shift = (os.clock() * 0.35) % 1
-        TimerGradient.Color = MakeTimerSequence(Shift)
-    end)
-    Library:GiveSignal(TimerColorConnection)
 
     if typeof(Data.Time) == "Instance" then
         TimerFill.Size = UDim2.fromScale(0, 1)
@@ -10997,49 +10970,9 @@ function Library:CreateWindow(WindowInfo)
             BackgroundTransparency = 1,
             Size = UDim2.new(0, X, 1, 0),
             Text = WindowInfo.Title,
-            TextColor3 = Color3.new(1, 1, 1),
             TextSize = 20,
             Parent = TitleHolder,
         })
-        pcall(function()
-            Library:RemoveFromRegistry(WindowTitle)
-        end)
-
-        -- Violet <-> Black animated title gradient
-        local TitleGradient = Instance.new("UIGradient")
-        TitleGradient.Rotation = 0
-        TitleGradient.Offset = Vector2.zero
-        TitleGradient.Parent = WindowTitle
-
-        local Violet = Color3.fromRGB(148, 0, 211)
-        local SoftViolet = Color3.fromRGB(186, 85, 255)
-        local Black = Color3.fromRGB(0, 0, 0)
-
-        local function MakeVioletBlackSequence(Shift: number): ColorSequence
-            local t = Shift % 1
-            local c1 = Black:Lerp(Violet, (math.sin(t * math.pi * 2) + 1) * 0.5)
-            local c2 = SoftViolet:Lerp(Black, (math.sin(t * math.pi * 2 + 1.2) + 1) * 0.5)
-            local c3 = Violet:Lerp(Black, (math.sin(t * math.pi * 2 + 2.4) + 1) * 0.5)
-            local c4 = Black:Lerp(SoftViolet, (math.sin(t * math.pi * 2 + 3.6) + 1) * 0.5)
-            return ColorSequence.new({
-                ColorSequenceKeypoint.new(0, c1),
-                ColorSequenceKeypoint.new(0.33, c2),
-                ColorSequenceKeypoint.new(0.66, c3),
-                ColorSequenceKeypoint.new(1, c4),
-            })
-        end
-
-        TitleGradient.Color = MakeVioletBlackSequence(0)
-
-        Library:GiveSignal(RunService.RenderStepped:Connect(function()
-            if Library.Unloaded or not WindowTitle or not WindowTitle.Parent then
-                return
-            end
-
-            local Shift = (os.clock() * 0.25) % 1
-            TitleGradient.Color = MakeVioletBlackSequence(Shift)
-            WindowTitle.TextColor3 = Color3.new(1, 1, 1)
-        end))
 
         --// Top Right Bar \\--
         RightWrapper = New("Frame", {
@@ -13946,8 +13879,28 @@ function Library:CreateWindow(WindowInfo)
             RunService:BindToRenderStep(ShowCursorBinding, Enum.RenderPriority.Last.Value, function()
                 UserInputService.MouseIconEnabled = not Library.ShowCustomCursor
 
-                Cursor.Position = UDim2.fromOffset(Mouse.X, Mouse.Y)
-                Cursor.Visible = Library.ShowCustomCursor
+                if Library.ShowCustomCursor then
+                    local MousePos = UserInputService:GetMouseLocation()
+                    local InsetY = 0
+                    pcall(function()
+                        InsetY = GuiService:GetGuiInset().Y
+                    end)
+                    local Pos = UDim2.fromOffset(MousePos.X, MousePos.Y - InsetY - 1)
+
+                    Cursor.ImageColor3 = Library.Scheme.AccentColor
+                    Cursor.Position = Pos
+                    Cursor.Visible = true
+
+                    if CursorOutline then
+                        CursorOutline.Position = Pos - UDim2.fromOffset(1, 1)
+                        CursorOutline.Visible = true
+                    end
+                else
+                    Cursor.Visible = false
+                    if CursorOutline then
+                        CursorOutline.Visible = false
+                    end
+                end
 
                 if Library.Unloaded == true or not (Library.Toggled and ScreenGui and ScreenGui.Parent) then
                     RestoreMouseIcon()
