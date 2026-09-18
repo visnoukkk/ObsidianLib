@@ -1,16 +1,16 @@
-local cloneref = (cloneref or clonereference or function(instance)
+local cloneref = (cloneref or clonereference or function(instance: any)
     return instance
 end)
-local CoreGui = cloneref(game:GetService("CoreGui"))
-local GuiService = cloneref(game:GetService("GuiService"))
-local Players = cloneref(game:GetService("Players"))
-local RunService = cloneref(game:GetService("RunService"))
-local SoundService = cloneref(game:GetService("SoundService"))
-local UserInputService = cloneref(game:GetService("UserInputService"))
-local TextService = cloneref(game:GetService("TextService"))
-local Teams = cloneref(game:GetService("Teams"))
-local Lighting = cloneref(game:GetService("Lighting"))
-local TweenService = cloneref(game:GetService("TweenService"))
+local CoreGui: CoreGui = cloneref(game:GetService("CoreGui"))
+local GuiService: GuiService = cloneref(game:GetService("GuiService"))
+local Players: Players = cloneref(game:GetService("Players"))
+local RunService: RunService = cloneref(game:GetService("RunService"))
+local SoundService: SoundService = cloneref(game:GetService("SoundService"))
+local UserInputService: UserInputService = cloneref(game:GetService("UserInputService"))
+local TextService: TextService = cloneref(game:GetService("TextService"))
+local Teams: Teams = cloneref(game:GetService("Teams"))
+local Lighting: Lighting = cloneref(game:GetService("Lighting"))
+local TweenService: TweenService = cloneref(game:GetService("TweenService"))
 
 local getgenv = getgenv or function()
     return shared
@@ -1841,66 +1841,82 @@ local Overlay = New("Frame", {
 Library.Floats = Floats
 Library.Overlay = Overlay
 
---// Cursor (image style from classic UI libraries)
+--// Cursor
 local Cursor
-local CursorOutline
 local CursorCross
 local InnerCross = {}
 local CursorCustomImage
 do
-    local CURSOR_IMAGE = "rbxassetid://4292970642"
+    Cursor = New("Frame", {
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        BackgroundTransparency = 1,
+        Size = UDim2.fromOffset(1, 1),
+        Visible = false,
+        ZIndex = 11000,
+        Parent = ScreenGui,
+    })
 
-    CursorOutline = Instance.new("ImageLabel")
-    CursorOutline.Name = "ObsidianCursorOutline"
-    CursorOutline.BackgroundTransparency = 1
-    CursorOutline.Image = CURSOR_IMAGE
-    CursorOutline.ImageColor3 = Color3.new(0, 0, 0)
-    CursorOutline.Size = UDim2.fromOffset(19, 19)
-    CursorOutline.Rotation = -45
-    CursorOutline.Visible = false
-    CursorOutline.ZIndex = 11000
-    CursorOutline.Parent = ScreenGui
+    CursorCross = New("Frame", {
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        BackgroundTransparency = 1,
+        Position = UDim2.fromScale(0.5, 0.5),
+        Size = UDim2.fromOffset(11, 11),
+        Parent = Cursor,
+    })
 
-    Cursor = Instance.new("ImageLabel")
-    Cursor.Name = "ObsidianCursor"
-    Cursor.BackgroundTransparency = 1
-    Cursor.Image = CURSOR_IMAGE
-    Cursor.ImageColor3 = (Library.Scheme and Library.Scheme.AccentColor) or Color3.fromRGB(125, 85, 255)
-    Cursor.Size = UDim2.fromOffset(17, 17)
-    Cursor.Rotation = -45
-    Cursor.Visible = false
-    Cursor.ZIndex = 11001
-    Cursor.Parent = ScreenGui
+    New("Frame", {
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        BackgroundColor3 = "DarkColor",
+        Position = UDim2.fromScale(0.5, 0.5),
+        Size = UDim2.new(1, 0, 0, 3),
+        ZIndex = 1,
+        Parent = CursorCross,
+    })
+    table.insert(InnerCross, New("Frame", {
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        BackgroundColor3 = "WhiteColor",
+        Position = UDim2.fromScale(0.5, 0.5),
+        Size = UDim2.new(1, -2, 0, 1),
+        ZIndex = 2,
+        Parent = CursorCross,
+    }))
 
-    -- Compatibility stubs for old Cursor API
-    CursorCross = Instance.new("Frame")
-    CursorCross.AnchorPoint = Vector2.new(0.5, 0.5)
-    CursorCross.BackgroundTransparency = 1
-    CursorCross.Size = UDim2.fromOffset(11, 11)
-    CursorCross.Visible = false
-    CursorCross.Parent = Cursor
+    New("Frame", {
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        BackgroundColor3 = "DarkColor",
+        Position = UDim2.fromScale(0.5, 0.5),
+        Size = UDim2.new(0, 3, 1, 0),
+        ZIndex = 1,
+        Parent = CursorCross,
+    })
+    table.insert(InnerCross, New("Frame", {
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        BackgroundColor3 = "WhiteColor",
+        Position = UDim2.fromScale(0.5, 0.5),
+        Size = UDim2.new(0, 1, 1, -2),
+        ZIndex = 2,
+        Parent = CursorCross,
+    }))
 
-    CursorCustomImage = Instance.new("ImageLabel")
-    CursorCustomImage.AnchorPoint = Vector2.new(0.5, 0.5)
-    CursorCustomImage.BackgroundTransparency = 1
-    CursorCustomImage.Size = UDim2.fromOffset(20, 20)
-    CursorCustomImage.Visible = false
-    CursorCustomImage.Parent = Cursor
+    CursorCustomImage = New("ImageLabel", {
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        BackgroundTransparency = 1,
+        Position = UDim2.fromScale(0.5, 0.5),
+        Size = UDim2.fromOffset(20, 20),
+        ZIndex = 3,
+        Visible = false,
+        Parent = Cursor,
+    })
 end
 
 local function RestoreMouseIcon()
-    pcall(function()
+    pcall(function() 
         RunService:UnbindFromRenderStep(Library.ShowCursorBinding)
         RunService.RenderStepped:Wait()
     end)
 
     UserInputService.MouseIconEnabled = Library.OriginalMouseIconEnabled
-    if Cursor then
-        Cursor.Visible = false
-    end
-    if CursorOutline then
-        CursorOutline.Visible = false
-    end
+    if Cursor then Cursor.Visible = false end
 end
 
 --// Notification \\--
@@ -1952,35 +1968,16 @@ Library.Cursor = {}
 
 function Library.Cursor:ResetCross()
     for _, Inner in InnerCross do
-        if Inner and Library.Registry[Inner] then
-            Library.Registry[Inner].BackgroundColor3 = "WhiteColor"
-        end
-        if Inner then
-            Inner.BackgroundColor3 = Library.Scheme.WhiteColor
-        end
+        Library.Registry[Inner].BackgroundColor3 = "WhiteColor"
+        Inner.BackgroundColor3 = Library.Scheme.WhiteColor
     end
 end
 
 function Library.Cursor:ResetIcon()
-    if CursorCross then
-        CursorCross.Visible = false
-    end
-    if CursorCustomImage then
-        CursorCustomImage.Visible = false
-        CursorCustomImage.ImageColor3 = Color3.new(1, 1, 1)
-        CursorCustomImage.Size = UDim2.fromOffset(20, 20)
-    end
-    if Cursor and Cursor:IsA("ImageLabel") then
-        Cursor.Image = "rbxassetid://4292970642"
-        Cursor.ImageColor3 = (Library.Scheme and Library.Scheme.AccentColor) or Color3.fromRGB(125, 85, 255)
-        Cursor.Size = UDim2.fromOffset(17, 17)
-        Cursor.Rotation = -45
-    end
-    if CursorOutline then
-        CursorOutline.Image = "rbxassetid://4292970642"
-        CursorOutline.Size = UDim2.fromOffset(19, 19)
-        CursorOutline.Rotation = -45
-    end
+    CursorCross.Visible = true
+    CursorCustomImage.Visible = false
+    CursorCustomImage.ImageColor3 = Color3.new(1, 1, 1)
+    CursorCustomImage.Size = UDim2.fromOffset(20, 20)
 end
 
 function Library.Cursor:ResetCursor()
@@ -1988,22 +1985,15 @@ function Library.Cursor:ResetCursor()
     Library.Cursor:ResetIcon()
 end
 
-function Library.Cursor:ChangeCrossColor(Color)
+function Library.Cursor:ChangeCrossColor(Color: Color3)
     assert(typeof(Color) == "Color3", "Color3 expected.")
     for _, Inner in InnerCross do
-        if Inner then
-            Inner.BackgroundColor3 = Color
-            if Library.Registry[Inner] then
-                Library.Registry[Inner].BackgroundColor3 = nil
-            end
-        end
-    end
-    if Cursor and Cursor:IsA("ImageLabel") then
-        Cursor.ImageColor3 = Color
+        Inner.BackgroundColor3 = Color
+        Library.Registry[Inner].BackgroundColor3 = nil
     end
 end
 
-function Library.Cursor:ChangeIcon(ImageId)
+function Library.Cursor:ChangeIcon(ImageId: string)
     if not ImageId or ImageId == "" then
         Library.Cursor:ResetIcon()
         return
@@ -2012,41 +2002,19 @@ function Library.Cursor:ChangeIcon(ImageId)
     local Icon = Library:GetCustomIcon(ImageId)
     assert(Icon, "Image must be a valid Roblox asset or a valid URL or a valid lucide icon.")
 
-    if Cursor and Cursor:IsA("ImageLabel") then
-        Cursor.Image = Icon.Url or Cursor.Image
-        Cursor.ImageRectOffset = Icon.ImageRectOffset or Vector2.zero
-        Cursor.ImageRectSize = Icon.ImageRectSize or Vector2.zero
-        Cursor.Rotation = 0
-    end
-    if CursorOutline then
-        CursorOutline.Visible = false
-    end
-    if CursorCross then
-        CursorCross.Visible = false
-    end
-    if CursorCustomImage then
-        CursorCustomImage.Visible = false
-    end
+    CursorCross.Visible = false
+    CursorCustomImage.Visible = true
+    Library:ApplyLucideIcon(CursorCustomImage, Icon)
 end
 
-function Library.Cursor:ChangeIconColor(Color)
+function Library.Cursor:ChangeIconColor(Color: Color3)
     assert(typeof(Color) == "Color3", "Color3 expected.")
-    if Cursor and Cursor:IsA("ImageLabel") then
-        Cursor.ImageColor3 = Color
-    end
-    if CursorCustomImage then
-        CursorCustomImage.ImageColor3 = Color
-    end
+    CursorCustomImage.ImageColor3 = Color
 end
 
-function Library.Cursor:ChangeIconSize(Size)
+function Library.Cursor:ChangeIconSize(Size: UDim2)
     assert(typeof(Size) == "UDim2", "UDim2 expected.")
-    if Cursor and Cursor:IsA("ImageLabel") then
-        Cursor.Size = Size
-    end
-    if CursorCustomImage then
-        CursorCustomImage.Size = Size
-    end
+    CursorCustomImage.Size = Size
 end
 
 --// DEPRECATED
@@ -2312,11 +2280,14 @@ function Library:MakeDraggable(
     local StartPos
     local FramePos
     local Dragging = false
+    local PendingPos -- final position applied on release (menu stays put while dragging)
     local Changed
     local InputBegan
     local InputChanged
 
     local SnapGuideX, SnapGuideY
+    local DragOutline
+    local DragOutlineStroke
 
     local function GetSnapGuides()
         if not SnapGuideX then
@@ -2348,6 +2319,52 @@ function Library:MakeDraggable(
         return SnapGuideX, SnapGuideY
     end
 
+    local function GetDragOutline()
+        if not DragOutline then
+            local Accent = (Library.Scheme and Library.Scheme.AccentColor) or Color3.fromRGB(125, 85, 255)
+            DragOutline = Instance.new("Frame")
+            DragOutline.Name = "ObsidianDragOutline"
+            DragOutline.BackgroundColor3 = Accent
+            DragOutline.BackgroundTransparency = 0.55
+            DragOutline.BorderSizePixel = 0
+            DragOutline.Visible = false
+            DragOutline.ZIndex = 9999
+            DragOutline.Parent = ScreenGui
+
+            local Corner = Instance.new("UICorner")
+            Corner.CornerRadius = UDim.new(0, (Library.CornerRadius or 4))
+            Corner.Parent = DragOutline
+
+            DragOutlineStroke = Instance.new("UIStroke")
+            DragOutlineStroke.Color = Accent
+            DragOutlineStroke.Thickness = 2
+            DragOutlineStroke.Transparency = 0.1
+            DragOutlineStroke.Parent = DragOutline
+        end
+
+        return DragOutline
+    end
+
+    local function ShowDragOutlineAt(Pos)
+        local Outline = GetDragOutline()
+        local Accent = (Library.Scheme and Library.Scheme.AccentColor) or Color3.fromRGB(125, 85, 255)
+        local AbsSize = UI.AbsoluteSize
+
+        Outline.BackgroundColor3 = Accent
+        if DragOutlineStroke then
+            DragOutlineStroke.Color = Accent
+        end
+        Outline.Size = UDim2.fromOffset(AbsSize.X, AbsSize.Y)
+        Outline.Position = Pos
+        Outline.Visible = true
+    end
+
+    local function HideDragOutline()
+        if DragOutline then
+            DragOutline.Visible = false
+        end
+    end
+
     local function HideSnapGuides()
         if SnapGuideX then
             SnapGuideX.Visible = false
@@ -2355,6 +2372,7 @@ function Library:MakeDraggable(
         if SnapGuideY then
             SnapGuideY.Visible = false
         end
+        HideDragOutline()
     end
 
     InputBegan = DragFrame.InputBegan:Connect(function(Input: InputObject)
@@ -2364,7 +2382,12 @@ function Library:MakeDraggable(
 
         StartPos = Input.Position
         FramePos = UI.Position
+        PendingPos = FramePos
         Dragging = true
+
+        -- Show ghost outline at current menu position; menu itself stays still
+        local AbsPos = UI.AbsolutePosition
+        ShowDragOutlineAt(UDim2.fromOffset(AbsPos.X, AbsPos.Y))
 
         Changed = Input.Changed:Connect(function()
             if Input.UserInputState ~= Enum.UserInputState.End then
@@ -2372,6 +2395,13 @@ function Library:MakeDraggable(
             end
 
             Dragging = false
+
+            -- Apply final position to the real menu only on release
+            if PendingPos then
+                UI.Position = PendingPos
+                PendingPos = nil
+            end
+
             HideSnapGuides()
 
             if Changed and Changed.Connected then
@@ -2388,6 +2418,7 @@ function Library:MakeDraggable(
             or not (ScreenGui and ScreenGui.Parent)
         then
             Dragging = false
+            PendingPos = nil
             HideSnapGuides()
 
             if Changed and Changed.Connected then
@@ -2435,7 +2466,19 @@ function Library:MakeDraggable(
                 end
             end
 
-            UI.Position = UDim2.new(FramePos.X.Scale, NewX, FramePos.Y.Scale, NewY)
+            -- Store pending position but do NOT move the menu yet
+            PendingPos = UDim2.new(FramePos.X.Scale, NewX, FramePos.Y.Scale, NewY)
+
+            -- Move only the filled accent outline (ghost)
+            local ViewportSize = workspace.CurrentCamera and workspace.CurrentCamera.ViewportSize or Vector2.new(1920, 1080)
+            local OutlineX = FramePos.X.Scale * ViewportSize.X + NewX
+            local OutlineY = FramePos.Y.Scale * ViewportSize.Y + NewY
+            -- Account for GuiInset so outline aligns with ScreenGui space
+            local InsetY = 0
+            pcall(function()
+                InsetY = GuiService:GetGuiInset().Y
+            end)
+            ShowDragOutlineAt(UDim2.fromOffset(OutlineX, OutlineY - InsetY))
         end
     end)
 
@@ -2460,6 +2503,11 @@ function Library:MakeDraggable(
         end
         if SnapGuideY then
             SnapGuideY:Destroy()
+        end
+        if DragOutline then
+            DragOutline:Destroy()
+            DragOutline = nil
+            DragOutlineStroke = nil
         end
 
         local IdxChanged = table.find(Library.Signals, InputChanged)
@@ -13907,32 +13955,8 @@ function Library:CreateWindow(WindowInfo)
             RunService:BindToRenderStep(ShowCursorBinding, Enum.RenderPriority.Last.Value, function()
                 UserInputService.MouseIconEnabled = not Library.ShowCustomCursor
 
-                if Library.ShowCustomCursor and Cursor then
-                    local MousePos = UserInputService:GetMouseLocation()
-                    local InsetY = 0
-                    pcall(function()
-                        InsetY = GuiService:GetGuiInset().Y
-                    end)
-
-                    local PosX = MousePos.X
-                    local PosY = MousePos.Y - InsetY - 1
-
-                    Cursor.ImageColor3 = (Library.Scheme and Library.Scheme.AccentColor) or Color3.fromRGB(125, 85, 255)
-                    Cursor.Position = UDim2.fromOffset(PosX, PosY)
-                    Cursor.Visible = true
-
-                    if CursorOutline then
-                        CursorOutline.Position = UDim2.fromOffset(PosX - 1, PosY - 1)
-                        CursorOutline.Visible = true
-                    end
-                else
-                    if Cursor then
-                        Cursor.Visible = false
-                    end
-                    if CursorOutline then
-                        CursorOutline.Visible = false
-                    end
-                end
+                Cursor.Position = UDim2.fromOffset(Mouse.X, Mouse.Y)
+                Cursor.Visible = Library.ShowCustomCursor
 
                 if Library.Unloaded == true or not (Library.Toggled and ScreenGui and ScreenGui.Parent) then
                     RestoreMouseIcon()
